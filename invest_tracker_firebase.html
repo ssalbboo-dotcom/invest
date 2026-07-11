@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>투자 트래커</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", sans-serif;
+    color: #1c2230;
+    background: #f6f7f9;
+    padding: 20px 16px 48px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .head h1 { font-size: 21px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.02em; }
+  .head .sub { font-size: 13px; color: #5b6472; margin: 0 0 16px; }
+
+  .sync-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: #16794f; background: #e6f7ee;
+    padding: 4px 10px; border-radius: 999px; margin-bottom: 14px;
+  }
+  .sync-badge.offline { color: #a34b1d; background: #fdf0e4; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #16794f; }
+  .sync-badge.offline .dot { background: #a34b1d; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; background: #ebedf0; border-radius: 10px; padding: 4px; }
+  .tab-btn { flex: 1; border: none; background: transparent; padding: 9px 6px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; }
+  .tab-btn.active { background: #fff; color: #1c2230; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .card { background: #ffffff; border: 1px solid #e6e8eb; border-radius: 12px; padding: 14px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .card .label { font-size: 11px; color: #8a909c; font-weight: 600; }
+  .card .value { font-size: 16px; font-weight: 700; }
+  .card.highlight { background: #1c2230; border-color: #1c2230; }
+  .card.highlight .label { color: #aeb4c0; }
+  .card.highlight .value { color: #fff; }
+  .card.up .value { color: #c0392b; }
+  .card.down .value { color: #2563eb; }
+
+  .panel { background: #ffffff; border: 1px solid #e6e8eb; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .panel h2 { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
+  .field-label { display: block; font-size: 12px; font-weight: 600; color: #5b6472; margin-bottom: 6px; }
+
+  input { width: 100%; border: 1px solid #d8dbe0; border-radius: 8px; padding: 9px 10px; font-size: 14px; background: #fcfcfd; color: #1c2230; }
+  input:focus { outline: 2px solid #1c2230; outline-offset: 1px; }
+
+  .form-row { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+  .field { flex: 1; min-width: 110px; display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 11px; color: #8a909c; font-weight: 600; }
+
+  .btn-add { background: #1c2230; color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; height: 38px; }
+  .btn-add:hover { background: #2c3445; }
+  .btn-add:disabled { opacity: 0.5; cursor: default; }
+
+  .error { color: #c0392b; font-size: 12px; margin: 10px 0 0; }
+  .empty { color: #8a909c; font-size: 13px; margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: #8a909c; font-weight: 600; font-size: 11px; padding: 6px 4px; border-bottom: 1px solid #eceef0; }
+  td { padding: 8px 4px; border-bottom: 1px solid #f1f2f4; }
+  .btn-del { background: transparent; border: 1px solid #e6e8eb; color: #8a909c; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
+  .btn-del:hover { color: #c0392b; border-color: #c0392b; }
+
+  .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f2f4; font-size: 13px; }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-row .acc-name { font-weight: 700; }
+  .breakdown-row .acc-sub { color: #8a909c; font-size: 11px; }
+  .breakdown-row .acc-right { text-align: right; }
+
+  @media (max-width: 420px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <h1>투자 트래커</h1>
+    <p class="sub">계좌별 납입 기록을 관리하고, 전체 탭에서 합산 현황을 확인해요.</p>
+  </header>
+
+  <div class="sync-badge" id="sync-badge"><span class="dot"></span><span id="sync-text">연결 중...</span></div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn" data-tab="sp500">S&P500</button>
+    <button class="tab-btn" data-tab="irp">IRP</button>
+    <button class="tab-btn" data-tab="isa">ISA</button>
+    <button class="tab-btn" data-tab="all">전체</button>
+  </div>
+
+  <div id="account-view"></div>
+  <div id="all-view"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  var firebaseConfig = {
+    apiKey: "AIzaSyD-FjeA9AHlXlmRaOVP4Ci_zG0mvP5j71Y",
+    authDomain: "inverst-50a4c.firebaseapp.com",
+    projectId: "inverst-50a4c",
+    storageBucket: "inverst-50a4c.firebasestorage.app",
+    messagingSenderId: "443639216706",
+    appId: "1:443639216706:web:5742d78121f88b80b98bdb"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.firestore();
+  var docRef = db.collection('invest-tracker').doc('main');
+
+  var ACCOUNTS = [
+    { id: 'sp500', label: 'S&P500' },
+    { id: 'irp', label: 'IRP' },
+    { id: 'isa', label: 'ISA' }
+  ];
+  var state = {
+    activeTab: 'sp500',
+    accounts: {
+      sp500: { entries: [], currentPrice: '' },
+      irp: { entries: [], currentPrice: '' },
+      isa: { entries: [], currentPrice: '' }
+    }
+  };
+  var isRemoteUpdate = false;
+
+  function setSyncStatus(ok, text) {
+    var badge = document.getElementById('sync-badge');
+    var t = document.getElementById('sync-text');
+    badge.classList.toggle('offline', !ok);
+    t.textContent = text;
+  }
+
+  function saveToCloud() {
+    if (isRemoteUpdate) return;
+    setSyncStatus(true, '저장 중...');
+    docRef.set({ accounts: state.accounts })
+      .then(function () { setSyncStatus(true, '동기화됨'); })
+      .catch(function (err) {
+        console.error(err);
+        setSyncStatus(false, '저장 실패 - 인터넷 연결 확인');
+      });
+  }
+
+  // 실시간 구독: 다른 기기에서 바뀌면 자동 반영
+  docRef.onSnapshot(function (snap) {
+    if (snap.exists) {
+      var data = snap.data();
+      if (data && data.accounts) {
+        isRemoteUpdate = true;
+        ACCOUNTS.forEach(function (a) {
+          if (data.accounts[a.id]) {
+            state.accounts[a.id].entries = data.accounts[a.id].entries || [];
+            state.accounts[a.id].currentPrice = data.accounts[a.id].currentPrice || '';
+          }
+        });
+        render();
+        isRemoteUpdate = false;
+      }
+    }
+    setSyncStatus(true, '동기화됨');
+  }, function (err) {
+    console.error(err);
+    setSyncStatus(false, '연결 실패 - Firestore 규칙/설정 확인');
+  });
+
+  function fmtWon(n) {
+    if (n === null || n === undefined || isNaN(n)) return '-';
+    return Math.round(n).toLocaleString('ko-KR') + '원';
+  }
+  function fmtNum(n, digits) {
+    if (n === null || n === undefined || isNaN(n)) return '-';
+    return n.toLocaleString('ko-KR', { maximumFractionDigits: digits || 4, minimumFractionDigits: 0 });
+  }
+  function fmtPct(n) {
+    if (n === null || n === undefined || isNaN(n)) return '-';
+    var sign = n > 0 ? '+' : '';
+    return sign + n.toFixed(2) + '%';
+  }
+
+  function computeTotals(accId) {
+    var acc = state.accounts[accId];
+    var invested = 0, shares = 0;
+    var sorted = acc.entries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
+    sorted.forEach(function (e) { invested += e.amount; shares += e.amount / e.price; });
+    var avgPrice = shares > 0 ? invested / shares : null;
+    var cp = parseFloat(acc.currentPrice);
+    var currentValue = !isNaN(cp) ? shares * cp : null;
+    var profit = currentValue !== null ? currentValue - invested : null;
+    var returnPct = currentValue !== null && invested > 0 ? (profit / invested) * 100 : null;
+    return { invested: invested, shares: shares, avgPrice: avgPrice, currentValue: currentValue, profit: profit, returnPct: returnPct, sorted: sorted };
+  }
+
+  function renderTabs() {
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === state.activeTab);
+    });
+  }
+
+  function renderAccountView(accId) {
+    var label = ACCOUNTS.filter(function (a) { return a.id === accId; })[0].label;
+    var t = computeTotals(accId);
+    var profitClass = t.profit > 0 ? ' up' : (t.profit < 0 ? ' down' : '');
+    var retClass = t.returnPct > 0 ? ' up' : (t.returnPct < 0 ? ' down' : '');
+
+    var html = '';
+    html += '<section class="summary-grid">' +
+      '<div class="card"><span class="label">누적 투자금</span><span class="value">' + fmtWon(t.invested) + '</span></div>' +
+      '<div class="card"><span class="label">보유 수량</span><span class="value">' + fmtNum(t.shares) + '</span></div>' +
+      '<div class="card"><span class="label">평균 매수단가</span><span class="value">' + (t.avgPrice ? fmtNum(t.avgPrice, 2) : '-') + '</span></div>' +
+      '<div class="card highlight"><span class="label">현재 평가금액</span><span class="value">' + (t.currentValue !== null ? fmtWon(t.currentValue) : '현재가 입력 필요') + '</span></div>' +
+      '<div class="card' + profitClass + '"><span class="label">손익</span><span class="value">' + (t.profit !== null ? fmtWon(t.profit) : '-') + '</span></div>' +
+      '<div class="card' + retClass + '"><span class="label">수익률</span><span class="value">' + fmtPct(t.returnPct) + '</span></div>' +
+      '</section>';
+
+    html += '<section class="panel">' +
+      '<label class="field-label" for="current-price-' + accId + '">현재 단가 입력 (' + label + ')</label>' +
+      '<input id="current-price-' + accId + '" type="number" inputmode="decimal" placeholder="예: 17200" value="' + (state.accounts[accId].currentPrice || '') + '" />' +
+      '</section>';
+
+    html += '<section class="panel">' +
+      '<h2>' + label + ' 납입 기록 추가</h2>' +
+      '<div class="form-row">' +
+      '<div class="field"><label>납입일</label><input id="f-date-' + accId + '" type="date" /></div>' +
+      '<div class="field"><label>납입 금액(원)</label><input id="f-amount-' + accId + '" type="number" placeholder="1000000" /></div>' +
+      '<div class="field"><label>매수 단가</label><input id="f-price-' + accId + '" type="number" placeholder="17200" /></div>' +
+      '<button class="btn-add" id="btn-add-' + accId + '">추가</button>' +
+      '</div>' +
+      '<p class="error" id="form-error-' + accId + '" style="display:none;"></p>' +
+      '</section>';
+
+    html += '<section class="panel">' +
+      '<h2>기록 목록 (' + t.sorted.length + '건)</h2>' +
+      '<div id="record-area-' + accId + '"></div>' +
+      '</section>';
+
+    document.getElementById('account-view').innerHTML = html;
+
+    var area = document.getElementById('record-area-' + accId);
+    if (t.sorted.length === 0) {
+      area.innerHTML = '<p class="empty">아직 기록이 없어요. 위에서 첫 납입 기록을 추가해보세요.</p>';
+    } else {
+      var rows = t.sorted.map(function (e) {
+        return '<tr>' +
+          '<td>' + e.date + '</td>' +
+          '<td>' + fmtWon(e.amount) + '</td>' +
+          '<td>' + fmtNum(e.price, 2) + '</td>' +
+          '<td>' + fmtNum(e.amount / e.price) + '</td>' +
+          '<td><button class="btn-del" data-id="' + e.id + '">삭제</button></td>' +
+          '</tr>';
+      }).join('');
+      area.innerHTML = '<table><thead><tr><th>날짜</th><th>납입금액</th><th>매수단가</th><th>매수수량</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+      Array.prototype.forEach.call(area.querySelectorAll('.btn-del'), function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          state.accounts[accId].entries = state.accounts[accId].entries.filter(function (e) { return e.id !== id; });
+          saveToCloud();
+          renderAccountView(accId);
+        });
+      });
+    }
+
+    document.getElementById('current-price-' + accId).addEventListener('input', function (e) {
+      state.accounts[accId].currentPrice = e.target.value;
+      saveToCloud();
+      renderAccountView(accId);
+    });
+
+    document.getElementById('btn-add-' + accId).addEventListener('click', function () {
+      var date = document.getElementById('f-date-' + accId).value;
+      var amount = parseFloat(document.getElementById('f-amount-' + accId).value);
+      var price = parseFloat(document.getElementById('f-price-' + accId).value);
+      var errEl = document.getElementById('form-error-' + accId);
+      function showErr(msg) {
+        if (!msg) { errEl.style.display = 'none'; errEl.textContent = ''; return; }
+        errEl.style.display = 'block';
+        errEl.textContent = msg;
+      }
+      if (!date) { showErr('날짜를 입력해주세요.'); return; }
+      if (isNaN(amount) || amount <= 0) { showErr('납입 금액을 정확히 입력해주세요.'); return; }
+      if (isNaN(price) || price <= 0) { showErr('매수 단가를 정확히 입력해주세요.'); return; }
+      showErr(null);
+      state.accounts[accId].entries.push({ id: Date.now().toString(), date: date, amount: amount, price: price });
+      saveToCloud();
+      renderAccountView(accId);
+    });
+  }
+
+  function renderAllView() {
+    var combined = { invested: 0, currentValue: null, profit: null, returnPct: null };
+    var anyCurrentValue = false;
+    var perAccount = ACCOUNTS.map(function (a) {
+      var t = computeTotals(a.id);
+      return { id: a.id, label: a.label, t: t };
+    });
+    perAccount.forEach(function (p) {
+      combined.invested += p.t.invested;
+      if (p.t.currentValue !== null) {
+        anyCurrentValue = true;
+        combined.currentValue = (combined.currentValue || 0) + p.t.currentValue;
+      }
+    });
+    if (anyCurrentValue) {
+      combined.profit = combined.currentValue - combined.invested;
+      combined.returnPct = combined.invested > 0 ? (combined.profit / combined.invested) * 100 : null;
+    }
+
+    var profitClass = combined.profit > 0 ? ' up' : (combined.profit < 0 ? ' down' : '');
+    var retClass = combined.returnPct > 0 ? ' up' : (combined.returnPct < 0 ? ' down' : '');
+
+    var html = '';
+    html += '<section class="summary-grid">' +
+      '<div class="card"><span class="label">전체 누적 투자금</span><span class="value">' + fmtWon(combined.invested) + '</span></div>' +
+      '<div class="card highlight"><span class="label">전체 평가금액</span><span class="value">' + (combined.currentValue !== null ? fmtWon(combined.currentValue) : '현재가 입력 필요') + '</span></div>' +
+      '<div class="card' + profitClass + '"><span class="label">전체 손익</span><span class="value">' + (combined.profit !== null ? fmtWon(combined.profit) : '-') + '</span></div>' +
+      '<div class="card' + retClass + '" style="grid-column: span 3;"><span class="label">전체 수익률</span><span class="value">' + fmtPct(combined.returnPct) + '</span></div>' +
+      '</section>';
+
+    html += '<section class="panel"><h2>계좌별 현황</h2>';
+    perAccount.forEach(function (p) {
+      var pColor = p.t.profit > 0 ? '#c0392b' : (p.t.profit < 0 ? '#2563eb' : '#1c2230');
+      html += '<div class="breakdown-row">' +
+        '<div><div class="acc-name">' + p.label + '</div>' +
+        '<div class="acc-sub">투자금 ' + fmtWon(p.t.invested) + '</div></div>' +
+        '<div class="acc-right">' +
+        '<div style="font-weight:700;">' + (p.t.currentValue !== null ? fmtWon(p.t.currentValue) : '현재가 미입력') + '</div>' +
+        '<div class="acc-sub" style="color:' + pColor + ';">' + (p.t.returnPct !== null ? fmtPct(p.t.returnPct) : '-') + '</div>' +
+        '</div></div>';
+    });
+    html += '</section>';
+
+    document.getElementById('all-view').innerHTML = html;
+  }
+
+  function render() {
+    renderTabs();
+    if (state.activeTab === 'all') {
+      document.getElementById('account-view').innerHTML = '';
+      renderAllView();
+    } else {
+      document.getElementById('all-view').innerHTML = '';
+      renderAccountView(state.activeTab);
+    }
+  }
+
+  document.getElementById('tabs').addEventListener('click', function (e) {
+    var btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    state.activeTab = btn.getAttribute('data-tab');
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
