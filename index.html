@@ -30,10 +30,26 @@
   .tab-btn { flex: 1; border: none; background: transparent; padding: 9px 6px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; }
   .tab-btn.active { background: #fff; color: #1c2230; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 
+  .stock-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stock-chip { border: 1px solid #d8dbe0; background: #fff; color: #4b5563; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .stock-chip.active { background: #1c2230; color: #fff; border-color: #1c2230; }
+  .stock-chip-del { margin-left: 6px; color: #b0b5bd; }
+  .stock-chip.active .stock-chip-del { color: #c9ccd2; }
+  .add-stock-row { display: flex; gap: 6px; margin-bottom: 14px; }
+  .add-stock-row input { flex: 1; }
+  .add-stock-row button { background: #fff; border: 1px dashed #b7bcc4; color: #4b5563; border-radius: 999px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+
   .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
   .card { background: #ffffff; border: 1px solid #e6e8eb; border-radius: 12px; padding: 14px 12px; display: flex; flex-direction: column; gap: 6px; }
   .card .label { font-size: 11px; color: #8a909c; font-weight: 600; }
   .card .value { font-size: 16px; font-weight: 700; }
+  .card .sub-value { font-size: 11px; color: #8a909c; font-weight: 600; }
+  .card.up .sub-value { color: #c0392b; opacity: 0.75; }
+  .card.down .sub-value { color: #2563eb; opacity: 0.75; }
+  .card.highlight .sub-value { color: #aeb4c0; }
+  .fx-panel { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .fx-panel .field { flex: 1; }
+  .fx-panel .fx-label { font-size: 12px; font-weight: 700; color: #5b6472; white-space: nowrap; }
   .card.highlight { background: #1c2230; border-color: #1c2230; }
   .card.highlight .label { color: #aeb4c0; }
   .card.highlight .value { color: #fff; }
@@ -44,16 +60,21 @@
   .panel h2 { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
   .field-label { display: block; font-size: 12px; font-weight: 600; color: #5b6472; margin-bottom: 6px; }
 
-  input { width: 100%; border: 1px solid #d8dbe0; border-radius: 8px; padding: 9px 10px; font-size: 14px; background: #fcfcfd; color: #1c2230; }
-  input:focus { outline: 2px solid #1c2230; outline-offset: 1px; }
+  input, select { width: 100%; border: 1px solid #d8dbe0; border-radius: 8px; padding: 9px 10px; font-size: 14px; background: #fcfcfd; color: #1c2230; }
+  input:focus, select:focus { outline: 2px solid #1c2230; outline-offset: 1px; }
 
   .form-row { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
-  .field { flex: 1; min-width: 110px; display: flex; flex-direction: column; gap: 4px; }
+  .field { flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 4px; }
   .field label { font-size: 11px; color: #8a909c; font-weight: 600; }
 
   .btn-add { background: #1c2230; color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; height: 38px; }
   .btn-add:hover { background: #2c3445; }
   .btn-add:disabled { opacity: 0.5; cursor: default; }
+
+  .toggle-row { display: flex; gap: 6px; margin-bottom: 10px; }
+  .toggle-btn { flex: 1; border: 1px solid #d8dbe0; background: #fff; color: #6b7280; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .toggle-btn.buy.active { background: #fdeceb; border-color: #c0392b; color: #c0392b; }
+  .toggle-btn.sell.active { background: #eaf1fd; border-color: #2563eb; color: #2563eb; }
 
   .error { color: #c0392b; font-size: 12px; margin: 10px 0 0; }
   .empty { color: #8a909c; font-size: 13px; margin: 0; }
@@ -61,6 +82,9 @@
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { text-align: left; color: #8a909c; font-weight: 600; font-size: 11px; padding: 6px 4px; border-bottom: 1px solid #eceef0; }
   td { padding: 8px 4px; border-bottom: 1px solid #f1f2f4; }
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .tag.buy { background: #fdeceb; color: #c0392b; }
+  .tag.sell { background: #eaf1fd; color: #2563eb; }
   .btn-del { background: transparent; border: 1px solid #e6e8eb; color: #8a909c; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
   .btn-del:hover { color: #c0392b; border-color: #c0392b; }
 
@@ -70,6 +94,9 @@
   .breakdown-row .acc-sub { color: #8a909c; font-size: 11px; }
   .breakdown-row .acc-right { text-align: right; }
 
+  .fee-row { display: flex; gap: 10px; margin-top: 10px; }
+  .fee-note { font-size: 11px; color: #8a909c; margin-top: 6px; }
+
   @media (max-width: 420px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
@@ -77,7 +104,7 @@
 <div class="wrap">
   <header class="head">
     <h1>투자 트래커</h1>
-    <p class="sub">계좌별 납입 기록을 관리하고, 전체 탭에서 합산 현황을 확인해요.</p>
+    <p class="sub">계좌별 기록을 관리하고, 전체 탭에서 합산 현황을 확인해요.</p>
   </header>
 
   <div class="sync-badge" id="sync-badge"><span class="dot"></span><span id="sync-text">연결 중...</span></div>
@@ -111,19 +138,24 @@
   var db = firebase.firestore();
   var docRef = db.collection('invest-tracker').doc('main');
 
-  var ACCOUNTS = [
-    { id: 'usstock', label: '미국주식투자' },
-    { id: 'sp500', label: 'S&P500' },
-    { id: 'irp', label: 'IRP' },
-    { id: 'isa', label: 'ISA' }
+  // "월납입식" 계좌 (S&P500 / IRP / ISA)
+  var SIMPLE_ACCOUNTS = [
+    { id: 'sp500', label: 'S&P500', defaultFee: 0.015 },
+    { id: 'irp', label: 'IRP', defaultFee: 0.015 },
+    { id: 'isa', label: 'ISA', defaultFee: 0.015 }
   ];
+
   var state = {
     activeTab: 'usstock',
+    activeStockId: null,
     accounts: {
-      usstock: { entries: [], currentPrice: '' },
-      sp500: { entries: [], currentPrice: '' },
-      irp: { entries: [], currentPrice: '' },
-      isa: { entries: [], currentPrice: '' }
+      sp500: { entries: [], currentPrice: '', feeRate: 0.015 },
+      irp: { entries: [], currentPrice: '', feeRate: 0.015 },
+      isa: { entries: [], currentPrice: '', feeRate: 0.015 }
+    },
+    usstock: {
+      stocks: {}, // { id: { name, currentPrice, feeRate, transactions: [{id,date,type,price,qty,fee}] } }
+      exchangeRate: 1400
     }
   };
   var isRemoteUpdate = false;
@@ -138,7 +170,7 @@
   function saveToCloud() {
     if (isRemoteUpdate) return;
     setSyncStatus(true, '저장 중...');
-    docRef.set({ accounts: state.accounts })
+    docRef.set({ accounts: state.accounts, usstock: state.usstock })
       .then(function () { setSyncStatus(true, '동기화됨'); })
       .catch(function (err) {
         console.error(err);
@@ -146,21 +178,32 @@
       });
   }
 
-  // 실시간 구독: 다른 기기에서 바뀌면 자동 반영
   docRef.onSnapshot(function (snap) {
     if (snap.exists) {
       var data = snap.data();
+      isRemoteUpdate = true;
       if (data && data.accounts) {
-        isRemoteUpdate = true;
-        ACCOUNTS.forEach(function (a) {
+        SIMPLE_ACCOUNTS.forEach(function (a) {
           if (data.accounts[a.id]) {
             state.accounts[a.id].entries = data.accounts[a.id].entries || [];
             state.accounts[a.id].currentPrice = data.accounts[a.id].currentPrice || '';
+            state.accounts[a.id].feeRate = (data.accounts[a.id].feeRate !== undefined && data.accounts[a.id].feeRate !== null)
+              ? data.accounts[a.id].feeRate : a.defaultFee;
           }
         });
-        render();
-        isRemoteUpdate = false;
       }
+      if (data && data.usstock && data.usstock.stocks) {
+        state.usstock.stocks = data.usstock.stocks;
+      }
+      if (data && data.usstock && data.usstock.exchangeRate) {
+        state.usstock.exchangeRate = data.usstock.exchangeRate;
+      }
+      if (!state.activeStockId) {
+        var ids = Object.keys(state.usstock.stocks);
+        if (ids.length > 0) state.activeStockId = ids[0];
+      }
+      render();
+      isRemoteUpdate = false;
     }
     setSyncStatus(true, '동기화됨');
   }, function (err) {
@@ -172,6 +215,15 @@
     if (n === null || n === undefined || isNaN(n)) return '-';
     return Math.round(n).toLocaleString('ko-KR') + '원';
   }
+  function fmtUsd(n) {
+    if (n === null || n === undefined || isNaN(n)) return '-';
+    var sign = n < 0 ? '-' : '';
+    return sign + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function usdToWon(n, rate) {
+    if (n === null || n === undefined || isNaN(n)) return null;
+    return n * rate;
+  }
   function fmtNum(n, digits) {
     if (n === null || n === undefined || isNaN(n)) return '-';
     return n.toLocaleString('ko-KR', { maximumFractionDigits: digits || 4, minimumFractionDigits: 0 });
@@ -182,44 +234,52 @@
     return sign + n.toFixed(2) + '%';
   }
 
-  function computeTotals(accId) {
+  // ================= 월납입식 계좌 (S&P500 / IRP / ISA) =================
+
+  function computeSimpleTotals(accId) {
     var acc = state.accounts[accId];
-    var invested = 0, shares = 0;
+    var principal = 0, feeTotal = 0, shares = 0;
     var sorted = acc.entries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
-    sorted.forEach(function (e) { invested += e.amount; shares += e.amount / e.price; });
-    var avgPrice = shares > 0 ? invested / shares : null;
+    sorted.forEach(function (e) {
+      var fee = e.fee !== undefined && e.fee !== null ? e.fee : 0;
+      principal += e.amount;
+      feeTotal += fee;
+      shares += e.amount / e.price;
+    });
+    var invested = principal + feeTotal;
+    var avgPrice = shares > 0 ? principal / shares : null;
     var cp = parseFloat(acc.currentPrice);
     var currentValue = !isNaN(cp) ? shares * cp : null;
     var profit = currentValue !== null ? currentValue - invested : null;
     var returnPct = currentValue !== null && invested > 0 ? (profit / invested) * 100 : null;
-    return { invested: invested, shares: shares, avgPrice: avgPrice, currentValue: currentValue, profit: profit, returnPct: returnPct, sorted: sorted };
+    return { invested: invested, principal: principal, feeTotal: feeTotal, shares: shares, avgPrice: avgPrice, currentValue: currentValue, profit: profit, returnPct: returnPct, sorted: sorted };
   }
 
-  function renderTabs() {
-    Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (btn) {
-      btn.classList.toggle('active', btn.getAttribute('data-tab') === state.activeTab);
-    });
-  }
-
-  function renderAccountView(accId) {
-    var label = ACCOUNTS.filter(function (a) { return a.id === accId; })[0].label;
-    var t = computeTotals(accId);
+  function renderSimpleAccountView(accId) {
+    var label = SIMPLE_ACCOUNTS.filter(function (a) { return a.id === accId; })[0].label;
+    var t = computeSimpleTotals(accId);
     var profitClass = t.profit > 0 ? ' up' : (t.profit < 0 ? ' down' : '');
     var retClass = t.returnPct > 0 ? ' up' : (t.returnPct < 0 ? ' down' : '');
 
     var html = '';
     html += '<section class="summary-grid">' +
-      '<div class="card"><span class="label">누적 투자금</span><span class="value">' + fmtWon(t.invested) + '</span></div>' +
+      '<div class="card"><span class="label">누적 투자금(수수료 포함)</span><span class="value">' + fmtWon(t.invested) + '</span></div>' +
+      '<div class="card"><span class="label">누적 수수료</span><span class="value">' + fmtWon(t.feeTotal) + '</span></div>' +
       '<div class="card"><span class="label">보유 수량</span><span class="value">' + fmtNum(t.shares) + '</span></div>' +
       '<div class="card"><span class="label">평균 매수단가</span><span class="value">' + (t.avgPrice ? fmtNum(t.avgPrice, 2) : '-') + '</span></div>' +
       '<div class="card highlight"><span class="label">현재 평가금액</span><span class="value">' + (t.currentValue !== null ? fmtWon(t.currentValue) : '현재가 입력 필요') + '</span></div>' +
       '<div class="card' + profitClass + '"><span class="label">손익</span><span class="value">' + (t.profit !== null ? fmtWon(t.profit) : '-') + '</span></div>' +
-      '<div class="card' + retClass + '"><span class="label">수익률</span><span class="value">' + fmtPct(t.returnPct) + '</span></div>' +
+      '<div class="card' + retClass + '" style="grid-column: span 2;"><span class="label">수익률(수수료 반영)</span><span class="value">' + fmtPct(t.returnPct) + '</span></div>' +
       '</section>';
 
     html += '<section class="panel">' +
       '<label class="field-label" for="current-price-' + accId + '">현재 단가 입력 (' + label + ')</label>' +
       '<input id="current-price-' + accId + '" type="number" inputmode="decimal" placeholder="예: 17200" value="' + (state.accounts[accId].currentPrice || '') + '" />' +
+      '<div class="fee-row">' +
+      '<div class="field"><label class="field-label" for="fee-rate-' + accId + '">매매 수수료율(%)</label>' +
+      '<input id="fee-rate-' + accId + '" type="number" step="0.001" value="' + state.accounts[accId].feeRate + '" /></div>' +
+      '</div>' +
+      '<p class="fee-note">키움증권 기준 국내상장 ETF 0.015%가 일반적이지만, 이벤트/계좌 조건에 따라 다를 수 있어 직접 확인 후 조정해주세요.</p>' +
       '</section>';
 
     html += '<section class="panel">' +
@@ -245,21 +305,23 @@
       area.innerHTML = '<p class="empty">아직 기록이 없어요. 위에서 첫 납입 기록을 추가해보세요.</p>';
     } else {
       var rows = t.sorted.map(function (e) {
+        var feeVal = e.fee !== undefined && e.fee !== null ? e.fee : 0;
         return '<tr>' +
           '<td>' + e.date + '</td>' +
           '<td>' + fmtWon(e.amount) + '</td>' +
           '<td>' + fmtNum(e.price, 2) + '</td>' +
           '<td>' + fmtNum(e.amount / e.price) + '</td>' +
+          '<td>' + fmtWon(feeVal) + '</td>' +
           '<td><button class="btn-del" data-id="' + e.id + '">삭제</button></td>' +
           '</tr>';
       }).join('');
-      area.innerHTML = '<table><thead><tr><th>날짜</th><th>납입금액</th><th>매수단가</th><th>매수수량</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+      area.innerHTML = '<table><thead><tr><th>날짜</th><th>납입금액</th><th>매수단가</th><th>매수수량</th><th>수수료</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
       Array.prototype.forEach.call(area.querySelectorAll('.btn-del'), function (btn) {
         btn.addEventListener('click', function () {
           var id = btn.getAttribute('data-id');
           state.accounts[accId].entries = state.accounts[accId].entries.filter(function (e) { return e.id !== id; });
           saveToCloud();
-          renderAccountView(accId);
+          renderSimpleAccountView(accId);
         });
       });
     }
@@ -267,7 +329,14 @@
     document.getElementById('current-price-' + accId).addEventListener('input', function (e) {
       state.accounts[accId].currentPrice = e.target.value;
       saveToCloud();
-      renderAccountView(accId);
+      renderSimpleAccountView(accId);
+    });
+
+    document.getElementById('fee-rate-' + accId).addEventListener('input', function (e) {
+      var v = parseFloat(e.target.value);
+      state.accounts[accId].feeRate = isNaN(v) ? 0 : v;
+      saveToCloud();
+      renderSimpleAccountView(accId);
     });
 
     document.getElementById('btn-add-' + accId).addEventListener('click', function () {
@@ -284,30 +353,322 @@
       if (isNaN(amount) || amount <= 0) { showErr('납입 금액을 정확히 입력해주세요.'); return; }
       if (isNaN(price) || price <= 0) { showErr('매수 단가를 정확히 입력해주세요.'); return; }
       showErr(null);
-      state.accounts[accId].entries.push({ id: Date.now().toString(), date: date, amount: amount, price: price });
+      var feeRate = state.accounts[accId].feeRate || 0;
+      var fee = Math.round(amount * feeRate / 100);
+      state.accounts[accId].entries.push({ id: Date.now().toString(), date: date, amount: amount, price: price, fee: fee });
       saveToCloud();
-      renderAccountView(accId);
+      renderSimpleAccountView(accId);
     });
   }
+
+  // ================= 미국주식투자 (종목별 매수/매도) =================
+
+  // 이동평균법으로 평균매수단가/실현손익/보유수량 계산
+  function computeStock(stock) {
+    var txs = (stock.transactions || []).slice().sort(function (a, b) {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return (a.id || '').localeCompare(b.id || '');
+    });
+    var qty = 0, avgCost = 0, realizedPnl = 0, feeTotal = 0, boughtTotal = 0;
+    txs.forEach(function (tx) {
+      var fee = tx.fee || 0;
+      feeTotal += fee;
+      if (tx.type === 'buy') {
+        var cost = tx.price * tx.qty + fee;
+        boughtTotal += tx.price * tx.qty;
+        avgCost = (qty + tx.qty) > 0 ? (avgCost * qty + cost) / (qty + tx.qty) : 0;
+        qty += tx.qty;
+      } else {
+        var proceeds = tx.price * tx.qty - fee;
+        realizedPnl += proceeds - avgCost * tx.qty;
+        qty -= tx.qty;
+      }
+    });
+    var cp = parseFloat(stock.currentPrice);
+    var currentValue = !isNaN(cp) ? qty * cp : null;
+    var costBasis = avgCost * qty; // 현재 보유분의 투자금
+    var unrealizedPnl = currentValue !== null ? currentValue - costBasis : null;
+    var unrealizedPct = currentValue !== null && costBasis > 0 ? (unrealizedPnl / costBasis) * 100 : null;
+    var totalPnl = (currentValue !== null ? unrealizedPnl : 0) + realizedPnl;
+    return {
+      qty: qty, avgCost: avgCost, costBasis: costBasis, currentValue: currentValue,
+      unrealizedPnl: unrealizedPnl, unrealizedPct: unrealizedPct,
+      realizedPnl: realizedPnl, feeTotal: feeTotal, totalPnl: totalPnl, sorted: txs
+    };
+  }
+
+  function ensureActiveStock() {
+    var ids = Object.keys(state.usstock.stocks);
+    if (ids.length === 0) { state.activeStockId = null; return; }
+    if (!state.activeStockId || !state.usstock.stocks[state.activeStockId]) {
+      state.activeStockId = ids[0];
+    }
+  }
+
+  function renderUsStockView() {
+    ensureActiveStock();
+    var ids = Object.keys(state.usstock.stocks);
+
+    var html = '';
+    if (ids.length === 0) {
+      html += '<div class="stock-tabs"></div>';
+    } else {
+      html += '<div class="stock-tabs">' + ids.map(function (id) {
+        var s = state.usstock.stocks[id];
+        var active = id === state.activeStockId ? ' active' : '';
+        return '<button class="stock-chip' + active + '" data-stock="' + id + '">' + s.name +
+          '<span class="stock-chip-del" data-stock-del="' + id + '">✕</span></button>';
+      }).join('') + '</div>';
+    }
+
+    html += '<div class="panel fx-panel">' +
+      '<span class="fx-label">기준 환율(원/달러)</span>' +
+      '<div class="field"><input id="fx-rate" type="number" step="1" value="' + state.usstock.exchangeRate + '" /></div>' +
+      '</div>';
+
+    html += '<div class="add-stock-row">' +
+      '<input id="new-stock-name" type="text" placeholder="새 종목명 (예: AAPL, TSLA)" />' +
+      '<button id="btn-add-stock">종목 추가</button>' +
+      '</div>';
+
+    if (!state.activeStockId) {
+      html += '<p class="empty">아직 등록된 종목이 없어요. 위에서 종목을 추가해보세요.</p>';
+      document.getElementById('account-view').innerHTML = html;
+      bindStockGlobalEvents();
+      bindFxRateEvent();
+      return;
+    }
+
+    var stock = state.usstock.stocks[state.activeStockId];
+    var t = computeStock(stock);
+    var rate = state.usstock.exchangeRate || 0;
+    var unrClass = t.unrealizedPnl > 0 ? ' up' : (t.unrealizedPnl < 0 ? ' down' : '');
+    var reClass = t.realizedPnl > 0 ? ' up' : (t.realizedPnl < 0 ? ' down' : '');
+
+    var currentValueKrw = usdToWon(t.currentValue, rate);
+    var unrealizedKrw = usdToWon(t.unrealizedPnl, rate);
+    var realizedKrw = usdToWon(t.realizedPnl, rate);
+    var feeKrw = usdToWon(t.feeTotal, rate);
+
+    html += '<section class="summary-grid">' +
+      '<div class="card"><span class="label">보유 수량</span><span class="value">' + fmtNum(t.qty) + '</span></div>' +
+      '<div class="card"><span class="label">평균 매수단가</span><span class="value">' + (t.qty > 0 ? fmtUsd(t.avgCost) : '-') + '</span></div>' +
+      '<div class="card"><span class="label">누적 수수료</span><span class="value">' + fmtUsd(t.feeTotal) + '</span><span class="sub-value">≈ ' + fmtWon(feeKrw) + '</span></div>' +
+      '<div class="card highlight"><span class="label">현재 평가금액</span><span class="value">' + (t.currentValue !== null ? fmtUsd(t.currentValue) : '현재가 입력 필요') + '</span>' + (t.currentValue !== null ? '<span class="sub-value">≈ ' + fmtWon(currentValueKrw) + '</span>' : '') + '</div>' +
+      '<div class="card' + unrClass + '"><span class="label">미실현 손익</span><span class="value">' + (t.unrealizedPnl !== null ? fmtUsd(t.unrealizedPnl) : '-') + '</span>' + (t.unrealizedPnl !== null ? '<span class="sub-value">≈ ' + fmtWon(unrealizedKrw) + '</span>' : '') + '</div>' +
+      '<div class="card' + unrClass + '"><span class="label">미실현 수익률</span><span class="value">' + fmtPct(t.unrealizedPct) + '</span></div>' +
+      '<div class="card' + reClass + '" style="grid-column: span 3;"><span class="label">실현 손익 (매도로 확정된 손익)</span><span class="value">' + fmtUsd(t.realizedPnl) + '</span><span class="sub-value">≈ ' + fmtWon(realizedKrw) + ' (환율 ' + fmtNum(rate, 0) + '원 기준)</span></div>' +
+      '</section>';
+
+    html += '<section class="panel">' +
+      '<label class="field-label" for="stock-current-price">현재 단가 입력 (' + stock.name + ', $)</label>' +
+      '<input id="stock-current-price" type="number" step="0.01" inputmode="decimal" placeholder="예: 185.20" value="' + (stock.currentPrice || '') + '" />' +
+      '<div class="fee-row">' +
+      '<div class="field"><label class="field-label" for="stock-fee-rate">매매 수수료율(%)</label>' +
+      '<input id="stock-fee-rate" type="number" step="0.001" value="' + (stock.feeRate !== undefined ? stock.feeRate : 0.07) + '" /></div>' +
+      '</div>' +
+      '<p class="fee-note">키움증권 기준 해외주식(미국 등) 수수료는 보통 0.07% 수준이지만, 이벤트/환율우대 조건에 따라 달라질 수 있어 직접 확인 후 조정해주세요.</p>' +
+      '</section>';
+
+    html += '<section class="panel">' +
+      '<h2>거래 기록 추가</h2>' +
+      '<div class="toggle-row">' +
+      '<button class="toggle-btn buy active" id="toggle-buy" data-type="buy">매수</button>' +
+      '<button class="toggle-btn sell" id="toggle-sell" data-type="sell">매도</button>' +
+      '</div>' +
+      '<div class="form-row">' +
+      '<div class="field"><label>거래일</label><input id="tx-date" type="date" /></div>' +
+      '<div class="field"><label>가격(주당, $)</label><input id="tx-price" type="number" step="0.01" placeholder="185.20" /></div>' +
+      '<div class="field"><label>수량</label><input id="tx-qty" type="number" placeholder="10" /></div>' +
+      '<button class="btn-add" id="btn-add-tx">추가</button>' +
+      '</div>' +
+      '<p class="error" id="tx-error" style="display:none;"></p>' +
+      '</section>';
+
+    html += '<section class="panel">' +
+      '<h2>거래 내역 (' + t.sorted.length + '건)</h2>' +
+      '<div id="tx-record-area"></div>' +
+      '</section>';
+
+    document.getElementById('account-view').innerHTML = html;
+    bindStockGlobalEvents();
+    bindFxRateEvent();
+
+    var area = document.getElementById('tx-record-area');
+    if (t.sorted.length === 0) {
+      area.innerHTML = '<p class="empty">아직 거래 내역이 없어요. 위에서 매수/매도 기록을 추가해보세요.</p>';
+    } else {
+      var rows = t.sorted.slice().reverse().map(function (tx) {
+        var tagClass = tx.type === 'buy' ? 'buy' : 'sell';
+        var tagLabel = tx.type === 'buy' ? '매수' : '매도';
+        return '<tr>' +
+          '<td>' + tx.date + '</td>' +
+          '<td><span class="tag ' + tagClass + '">' + tagLabel + '</span></td>' +
+          '<td>' + fmtUsd(tx.price) + '</td>' +
+          '<td>' + fmtNum(tx.qty) + '</td>' +
+          '<td>' + fmtUsd(tx.fee || 0) + '</td>' +
+          '<td><button class="btn-del" data-tx-id="' + tx.id + '">삭제</button></td>' +
+          '</tr>';
+      }).join('');
+      area.innerHTML = '<table><thead><tr><th>날짜</th><th>구분</th><th>가격($)</th><th>수량</th><th>수수료($)</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+      Array.prototype.forEach.call(area.querySelectorAll('.btn-del'), function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-tx-id');
+          stock.transactions = stock.transactions.filter(function (tx) { return tx.id !== id; });
+          saveToCloud();
+          renderUsStockView();
+        });
+      });
+    }
+
+    document.getElementById('stock-current-price').addEventListener('input', function (e) {
+      stock.currentPrice = e.target.value;
+      saveToCloud();
+      renderUsStockView();
+    });
+    document.getElementById('stock-fee-rate').addEventListener('input', function (e) {
+      var v = parseFloat(e.target.value);
+      stock.feeRate = isNaN(v) ? 0 : v;
+      saveToCloud();
+      renderUsStockView();
+    });
+
+    var txType = 'buy';
+    document.getElementById('toggle-buy').addEventListener('click', function () {
+      txType = 'buy';
+      document.getElementById('toggle-buy').classList.add('active');
+      document.getElementById('toggle-sell').classList.remove('active');
+    });
+    document.getElementById('toggle-sell').addEventListener('click', function () {
+      txType = 'sell';
+      document.getElementById('toggle-sell').classList.add('active');
+      document.getElementById('toggle-buy').classList.remove('active');
+    });
+
+    document.getElementById('btn-add-tx').addEventListener('click', function () {
+      var date = document.getElementById('tx-date').value;
+      var price = parseFloat(document.getElementById('tx-price').value);
+      var qty = parseFloat(document.getElementById('tx-qty').value);
+      var errEl = document.getElementById('tx-error');
+      function showErr(msg) {
+        if (!msg) { errEl.style.display = 'none'; errEl.textContent = ''; return; }
+        errEl.style.display = 'block';
+        errEl.textContent = msg;
+      }
+      if (!date) { showErr('거래일을 입력해주세요.'); return; }
+      if (isNaN(price) || price <= 0) { showErr('가격을 정확히 입력해주세요.'); return; }
+      if (isNaN(qty) || qty <= 0) { showErr('수량을 정확히 입력해주세요.'); return; }
+
+      var currentQty = computeStock(stock).qty;
+      if (txType === 'sell' && qty > currentQty) {
+        showErr('보유 수량(' + fmtNum(currentQty) + ')보다 많은 수량을 매도할 수 없어요.');
+        return;
+      }
+      showErr(null);
+
+      var feeRate = stock.feeRate || 0;
+      var fee = Math.round(price * qty * feeRate / 100);
+      stock.transactions.push({ id: Date.now().toString(), date: date, type: txType, price: price, qty: qty, fee: fee });
+      saveToCloud();
+      renderUsStockView();
+    });
+  }
+
+  function bindFxRateEvent() {
+    var fxInput = document.getElementById('fx-rate');
+    if (fxInput) {
+      fxInput.addEventListener('input', function (e) {
+        var v = parseFloat(e.target.value);
+        state.usstock.exchangeRate = isNaN(v) ? 0 : v;
+        saveToCloud();
+        renderUsStockView();
+      });
+    }
+  }
+
+  function bindStockGlobalEvents() {
+    Array.prototype.forEach.call(document.querySelectorAll('.stock-chip'), function (chip) {
+      chip.addEventListener('click', function (e) {
+        if (e.target.matches('[data-stock-del]')) return;
+        state.activeStockId = chip.getAttribute('data-stock');
+        renderUsStockView();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-stock-del]'), function (delBtn) {
+      delBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var id = delBtn.getAttribute('data-stock-del');
+        var name = state.usstock.stocks[id] ? state.usstock.stocks[id].name : '이 종목';
+        if (!confirm(name + '의 모든 거래 기록을 삭제할까요?')) return;
+        delete state.usstock.stocks[id];
+        if (state.activeStockId === id) state.activeStockId = null;
+        saveToCloud();
+        renderUsStockView();
+      });
+    });
+    var addBtn = document.getElementById('btn-add-stock');
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        var nameInput = document.getElementById('new-stock-name');
+        var name = (nameInput.value || '').trim();
+        if (!name) return;
+        var id = 'stk_' + Date.now().toString();
+        state.usstock.stocks[id] = { name: name, currentPrice: '', feeRate: 0.07, transactions: [] };
+        state.activeStockId = id;
+        saveToCloud();
+        renderUsStockView();
+      });
+    }
+  }
+
+  // ================= 전체 탭 =================
 
   function renderAllView() {
     var combined = { invested: 0, currentValue: null, profit: null, returnPct: null };
     var anyCurrentValue = false;
-    var perAccount = ACCOUNTS.map(function (a) {
-      var t = computeTotals(a.id);
-      return { id: a.id, label: a.label, t: t };
+
+    var perAccount = SIMPLE_ACCOUNTS.map(function (a) {
+      var t = computeSimpleTotals(a.id);
+      return { label: a.label, invested: t.invested, currentValue: t.currentValue, profit: t.profit, returnPct: t.returnPct };
     });
-    perAccount.forEach(function (p) {
-      combined.invested += p.t.invested;
-      if (p.t.currentValue !== null) {
-        anyCurrentValue = true;
-        combined.currentValue = (combined.currentValue || 0) + p.t.currentValue;
+
+    // 미국주식투자: 모든 종목의 보유분(costBasis) + 실현손익을 합산 (달러 기준)
+    var usInvestedUsd = 0, usCurrentValueUsd = null, usAnyCurrentValue = false, usRealizedTotalUsd = 0;
+    Object.keys(state.usstock.stocks).forEach(function (id) {
+      var t = computeStock(state.usstock.stocks[id]);
+      usInvestedUsd += t.costBasis;
+      usRealizedTotalUsd += t.realizedPnl;
+      if (t.currentValue !== null) {
+        usAnyCurrentValue = true;
+        usCurrentValueUsd = (usCurrentValueUsd || 0) + t.currentValue;
       }
     });
-    if (anyCurrentValue) {
-      combined.profit = combined.currentValue - combined.invested;
-      combined.returnPct = combined.invested > 0 ? (combined.profit / combined.invested) * 100 : null;
-    }
+    var usUnrealizedUsd = usAnyCurrentValue ? usCurrentValueUsd - usInvestedUsd : null;
+    var usProfitUsd = (usUnrealizedUsd !== null ? usUnrealizedUsd : 0) + usRealizedTotalUsd;
+    var usReturnPct = usInvestedUsd > 0 ? (usProfitUsd / usInvestedUsd) * 100 : null;
+
+    // 환율을 적용해 원화로 환산 후 다른 원화 계좌들과 합산
+    var rate = state.usstock.exchangeRate || 0;
+    perAccount.unshift({
+      label: '미국주식투자', invested: usInvestedUsd * rate,
+      currentValue: usAnyCurrentValue ? usCurrentValueUsd * rate : null,
+      profit: usProfitUsd * rate, returnPct: usReturnPct
+    });
+
+    perAccount.forEach(function (p) {
+      combined.invested += p.invested;
+      if (p.currentValue !== null) {
+        anyCurrentValue = true;
+        combined.currentValue = (combined.currentValue || 0) + p.currentValue;
+      }
+    });
+    // 실현손익까지 합쳐서 전체 손익 계산 (currentValue가 없는 계좌는 그 계좌 profit 0으로 취급하지 않고 제외)
+    var totalProfit = 0, hasAnyProfit = false;
+    perAccount.forEach(function (p) {
+      if (p.profit !== null && p.profit !== undefined) { totalProfit += p.profit; hasAnyProfit = true; }
+    });
+    combined.profit = hasAnyProfit ? totalProfit : null;
+    combined.returnPct = combined.profit !== null && combined.invested > 0 ? (combined.profit / combined.invested) * 100 : null;
 
     var profitClass = combined.profit > 0 ? ' up' : (combined.profit < 0 ? ' down' : '');
     var retClass = combined.returnPct > 0 ? ' up' : (combined.returnPct < 0 ? ' down' : '');
@@ -322,18 +683,27 @@
 
     html += '<section class="panel"><h2>계좌별 현황</h2>';
     perAccount.forEach(function (p) {
-      var pColor = p.t.profit > 0 ? '#c0392b' : (p.t.profit < 0 ? '#2563eb' : '#1c2230');
+      var pColor = p.profit > 0 ? '#c0392b' : (p.profit < 0 ? '#2563eb' : '#1c2230');
       html += '<div class="breakdown-row">' +
         '<div><div class="acc-name">' + p.label + '</div>' +
-        '<div class="acc-sub">투자금 ' + fmtWon(p.t.invested) + '</div></div>' +
+        '<div class="acc-sub">투자금 ' + fmtWon(p.invested) + '</div></div>' +
         '<div class="acc-right">' +
-        '<div style="font-weight:700;">' + (p.t.currentValue !== null ? fmtWon(p.t.currentValue) : '현재가 미입력') + '</div>' +
-        '<div class="acc-sub" style="color:' + pColor + ';">' + (p.t.returnPct !== null ? fmtPct(p.t.returnPct) : '-') + '</div>' +
+        '<div style="font-weight:700;">' + (p.currentValue !== null ? fmtWon(p.currentValue) : '현재가 미입력') + '</div>' +
+        '<div class="acc-sub" style="color:' + pColor + ';">' + (p.returnPct !== null ? fmtPct(p.returnPct) : '-') + '</div>' +
         '</div></div>';
     });
     html += '</section>';
+    html += '<p class="fee-note">미국주식투자 항목은 미국주식투자 탭에서 설정한 기준 환율(' + fmtNum(state.usstock.exchangeRate || 0, 0) + '원/달러)로 환산한 값이에요.</p>';
 
     document.getElementById('all-view').innerHTML = html;
+  }
+
+  // ================= 공통 렌더/탭 전환 =================
+
+  function renderTabs() {
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === state.activeTab);
+    });
   }
 
   function render() {
@@ -341,9 +711,12 @@
     if (state.activeTab === 'all') {
       document.getElementById('account-view').innerHTML = '';
       renderAllView();
+    } else if (state.activeTab === 'usstock') {
+      document.getElementById('all-view').innerHTML = '';
+      renderUsStockView();
     } else {
       document.getElementById('all-view').innerHTML = '';
-      renderAccountView(state.activeTab);
+      renderSimpleAccountView(state.activeTab);
     }
   }
 
