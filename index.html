@@ -83,6 +83,7 @@
   <div class="sync-badge" id="sync-badge"><span class="dot"></span><span id="sync-text">연결 중...</span></div>
 
   <div class="tabs" id="tabs">
+    <button class="tab-btn" data-tab="usstock">미국주식투자</button>
     <button class="tab-btn" data-tab="sp500">S&P500</button>
     <button class="tab-btn" data-tab="irp">IRP</button>
     <button class="tab-btn" data-tab="isa">ISA</button>
@@ -111,13 +112,15 @@
   var docRef = db.collection('invest-tracker').doc('main');
 
   var ACCOUNTS = [
+    { id: 'usstock', label: '미국주식투자' },
     { id: 'sp500', label: 'S&P500' },
     { id: 'irp', label: 'IRP' },
     { id: 'isa', label: 'ISA' }
   ];
   var state = {
-    activeTab: 'sp500',
+    activeTab: 'usstock',
     accounts: {
+      usstock: { entries: [], currentPrice: '' },
       sp500: { entries: [], currentPrice: '' },
       irp: { entries: [], currentPrice: '' },
       isa: { entries: [], currentPrice: '' }
