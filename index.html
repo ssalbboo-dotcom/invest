@@ -326,13 +326,13 @@
       });
     }
 
-    document.getElementById('current-price-' + accId).addEventListener('input', function (e) {
+    document.getElementById('current-price-' + accId).addEventListener('change', function (e) {
       state.accounts[accId].currentPrice = e.target.value;
       saveToCloud();
       renderSimpleAccountView(accId);
     });
 
-    document.getElementById('fee-rate-' + accId).addEventListener('input', function (e) {
+    document.getElementById('fee-rate-' + accId).addEventListener('change', function (e) {
       var v = parseFloat(e.target.value);
       state.accounts[accId].feeRate = isNaN(v) ? 0 : v;
       saveToCloud();
@@ -369,7 +369,7 @@
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return (a.id || '').localeCompare(b.id || '');
     });
-    var qty = 0, avgCost = 0, realizedPnl = 0, feeTotal = 0, boughtTotal = 0;
+    var qty = 0, avgCost = 0, realizedPnl = 0, realizedCostBasis = 0, feeTotal = 0, boughtTotal = 0;
     txs.forEach(function (tx) {
       var fee = tx.fee || 0;
       feeTotal += fee;
@@ -381,6 +381,7 @@
       } else {
         var proceeds = tx.price * tx.qty - fee;
         realizedPnl += proceeds - avgCost * tx.qty;
+        realizedCostBasis += avgCost * tx.qty;
         qty -= tx.qty;
       }
     });
@@ -389,11 +390,13 @@
     var costBasis = avgCost * qty; // 현재 보유분의 투자금
     var unrealizedPnl = currentValue !== null ? currentValue - costBasis : null;
     var unrealizedPct = currentValue !== null && costBasis > 0 ? (unrealizedPnl / costBasis) * 100 : null;
+    var realizedPct = realizedCostBasis > 0 ? (realizedPnl / realizedCostBasis) * 100 : null;
     var totalPnl = (currentValue !== null ? unrealizedPnl : 0) + realizedPnl;
     return {
       qty: qty, avgCost: avgCost, costBasis: costBasis, currentValue: currentValue,
       unrealizedPnl: unrealizedPnl, unrealizedPct: unrealizedPct,
-      realizedPnl: realizedPnl, feeTotal: feeTotal, totalPnl: totalPnl, sorted: txs
+      realizedPnl: realizedPnl, realizedCostBasis: realizedCostBasis, realizedPct: realizedPct,
+      feeTotal: feeTotal, totalPnl: totalPnl, sorted: txs
     };
   }
 
@@ -457,7 +460,8 @@
       '<div class="card highlight"><span class="label">현재 평가금액</span><span class="value">' + (t.currentValue !== null ? fmtUsd(t.currentValue) : '현재가 입력 필요') + '</span>' + (t.currentValue !== null ? '<span class="sub-value">≈ ' + fmtWon(currentValueKrw) + '</span>' : '') + '</div>' +
       '<div class="card' + unrClass + '"><span class="label">미실현 손익</span><span class="value">' + (t.unrealizedPnl !== null ? fmtUsd(t.unrealizedPnl) : '-') + '</span>' + (t.unrealizedPnl !== null ? '<span class="sub-value">≈ ' + fmtWon(unrealizedKrw) + '</span>' : '') + '</div>' +
       '<div class="card' + unrClass + '"><span class="label">미실현 수익률</span><span class="value">' + fmtPct(t.unrealizedPct) + '</span></div>' +
-      '<div class="card' + reClass + '" style="grid-column: span 3;"><span class="label">실현 손익 (매도로 확정된 손익)</span><span class="value">' + fmtUsd(t.realizedPnl) + '</span><span class="sub-value">≈ ' + fmtWon(realizedKrw) + ' (환율 ' + fmtNum(rate, 0) + '원 기준)</span></div>' +
+      '<div class="card' + reClass + '" style="grid-column: span 2;"><span class="label">실현 손익 (매도로 확정된 손익)</span><span class="value">' + fmtUsd(t.realizedPnl) + '</span><span class="sub-value">≈ ' + fmtWon(realizedKrw) + ' (환율 ' + fmtNum(rate, 0) + '원 기준)</span></div>' +
+      '<div class="card' + reClass + '"><span class="label">실현 수익률</span><span class="value">' + fmtPct(t.realizedPct) + '</span></div>' +
       '</section>';
 
     html += '<section class="panel">' +
@@ -521,12 +525,12 @@
       });
     }
 
-    document.getElementById('stock-current-price').addEventListener('input', function (e) {
+    document.getElementById('stock-current-price').addEventListener('change', function (e) {
       stock.currentPrice = e.target.value;
       saveToCloud();
       renderUsStockView();
     });
-    document.getElementById('stock-fee-rate').addEventListener('input', function (e) {
+    document.getElementById('stock-fee-rate').addEventListener('change', function (e) {
       var v = parseFloat(e.target.value);
       stock.feeRate = isNaN(v) ? 0 : v;
       saveToCloud();
@@ -577,7 +581,7 @@
   function bindFxRateEvent() {
     var fxInput = document.getElementById('fx-rate');
     if (fxInput) {
-      fxInput.addEventListener('input', function (e) {
+      fxInput.addEventListener('change', function (e) {
         var v = parseFloat(e.target.value);
         state.usstock.exchangeRate = isNaN(v) ? 0 : v;
         saveToCloud();
