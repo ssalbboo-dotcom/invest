@@ -633,30 +633,33 @@
 
     var perAccount = SIMPLE_ACCOUNTS.map(function (a) {
       var t = computeSimpleTotals(a.id);
-      return { label: a.label, invested: t.invested, currentValue: t.currentValue, profit: t.profit, returnPct: t.returnPct };
+      return { label: a.label, invested: t.invested, currentValue: t.currentValue, profit: t.profit, returnPct: t.returnPct, profitLabel: '평가손익' };
     });
 
-    // 미국주식투자: 모든 종목의 보유분(costBasis) + 실현손익을 합산 (달러 기준)
-    var usInvestedUsd = 0, usCurrentValueUsd = null, usAnyCurrentValue = false, usRealizedTotalUsd = 0;
+    // 미국주식투자: 매수/매도로 실제 확정된 실현손익을 기준으로 표시 (적립식 계좌들의 평가손익과 성격이 다름)
+    var usInvestedUsd = 0, usCurrentValueUsd = null, usAnyCurrentValue = false;
+    var usRealizedTotalUsd = 0, usRealizedCostBasisUsd = 0;
     Object.keys(state.usstock.stocks).forEach(function (id) {
       var t = computeStock(state.usstock.stocks[id]);
       usInvestedUsd += t.costBasis;
       usRealizedTotalUsd += t.realizedPnl;
+      usRealizedCostBasisUsd += t.realizedCostBasis;
       if (t.currentValue !== null) {
         usAnyCurrentValue = true;
         usCurrentValueUsd = (usCurrentValueUsd || 0) + t.currentValue;
       }
     });
-    var usUnrealizedUsd = usAnyCurrentValue ? usCurrentValueUsd - usInvestedUsd : null;
-    var usProfitUsd = (usUnrealizedUsd !== null ? usUnrealizedUsd : 0) + usRealizedTotalUsd;
-    var usReturnPct = usInvestedUsd > 0 ? (usProfitUsd / usInvestedUsd) * 100 : null;
+    var usRealizedPct = usRealizedCostBasisUsd > 0 ? (usRealizedTotalUsd / usRealizedCostBasisUsd) * 100 : null;
 
     // 환율을 적용해 원화로 환산 후 다른 원화 계좌들과 합산
     var rate = state.usstock.exchangeRate || 0;
     perAccount.unshift({
-      label: '미국주식투자', invested: usInvestedUsd * rate,
+      label: '미국주식투자',
+      invested: usInvestedUsd * rate, // 현재 보유 중인 종목의 원가(매도 안 한 부분)
       currentValue: usAnyCurrentValue ? usCurrentValueUsd * rate : null,
-      profit: usProfitUsd * rate, returnPct: usReturnPct
+      profit: usRealizedTotalUsd * rate, // 매도로 확정된 실현손익
+      returnPct: usRealizedPct,
+      profitLabel: '실현손익'
     });
 
     perAccount.forEach(function (p) {
@@ -693,11 +696,11 @@
         '<div class="acc-sub">투자금 ' + fmtWon(p.invested) + '</div></div>' +
         '<div class="acc-right">' +
         '<div style="font-weight:700;">' + (p.currentValue !== null ? fmtWon(p.currentValue) : '현재가 미입력') + '</div>' +
-        '<div class="acc-sub" style="color:' + pColor + ';">' + (p.returnPct !== null ? fmtPct(p.returnPct) : '-') + '</div>' +
+        '<div class="acc-sub" style="color:' + pColor + ';">' + p.profitLabel + ' ' + (p.profit !== null ? fmtWon(p.profit) : '-') + ' (' + (p.returnPct !== null ? fmtPct(p.returnPct) : '-') + ')</div>' +
         '</div></div>';
     });
     html += '</section>';
-    html += '<p class="fee-note">미국주식투자 항목은 미국주식투자 탭에서 설정한 기준 환율(' + fmtNum(state.usstock.exchangeRate || 0, 0) + '원/달러)로 환산한 값이에요.</p>';
+    html += '<p class="fee-note">미국주식투자는 매도로 확정된 실현손익, 나머지 계좌는 현재가 기준 평가손익을 나타내요. 미국주식투자 금액은 미국주식투자 탭에서 설정한 기준 환율(' + fmtNum(state.usstock.exchangeRate || 0, 0) + '원/달러)로 환산한 값이에요.</p>';
 
     document.getElementById('all-view').innerHTML = html;
   }
