@@ -149,9 +149,9 @@
     activeTab: 'usstock',
     activeStockId: null,
     accounts: {
-      sp500: { entries: [], currentPrice: '', feeRate: 0.015 },
-      irp: { entries: [], currentPrice: '', feeRate: 0.015 },
-      isa: { entries: [], currentPrice: '', feeRate: 0.015 }
+      sp500: { entries: [], currentPrice: '', feeRate: 0.015, distributions: [] },
+      irp: { entries: [], currentPrice: '', feeRate: 0.015, distributions: [] },
+      isa: { entries: [], currentPrice: '', feeRate: 0.015, distributions: [] }
     },
     usstock: {
       stocks: {}, // { id: { name, currentPrice, feeRate, transactions: [{id,date,type,price,qty,fee}] } }
@@ -189,6 +189,7 @@
             state.accounts[a.id].currentPrice = data.accounts[a.id].currentPrice || '';
             state.accounts[a.id].feeRate = (data.accounts[a.id].feeRate !== undefined && data.accounts[a.id].feeRate !== null)
               ? data.accounts[a.id].feeRate : a.defaultFee;
+            state.accounts[a.id].distributions = data.accounts[a.id].distributions || [];
           }
         });
       }
@@ -250,9 +251,18 @@
     var avgPrice = shares > 0 ? principal / shares : null;
     var cp = parseFloat(acc.currentPrice);
     var currentValue = !isNaN(cp) ? shares * cp : null;
-    var profit = currentValue !== null ? currentValue - invested : null;
+
+    var distributions = (acc.distributions || []).slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
+    var distributionTotal = 0;
+    distributions.forEach(function (d) { distributionTotal += d.amount; });
+
+    var profit = currentValue !== null ? (currentValue - invested + distributionTotal) : null;
     var returnPct = currentValue !== null && invested > 0 ? (profit / invested) * 100 : null;
-    return { invested: invested, principal: principal, feeTotal: feeTotal, shares: shares, avgPrice: avgPrice, currentValue: currentValue, profit: profit, returnPct: returnPct, sorted: sorted };
+    return {
+      invested: invested, principal: principal, feeTotal: feeTotal, shares: shares, avgPrice: avgPrice,
+      currentValue: currentValue, profit: profit, returnPct: returnPct, sorted: sorted,
+      distributions: distributions, distributionTotal: distributionTotal
+    };
   }
 
   function renderSimpleAccountView(accId) {
@@ -265,11 +275,12 @@
     html += '<section class="summary-grid">' +
       '<div class="card"><span class="label">누적 투자금(수수료 포함)</span><span class="value">' + fmtWon(t.invested) + '</span></div>' +
       '<div class="card"><span class="label">누적 수수료</span><span class="value">' + fmtWon(t.feeTotal) + '</span></div>' +
+      '<div class="card"><span class="label">누적 수익분배금</span><span class="value">' + fmtWon(t.distributionTotal) + '</span></div>' +
       '<div class="card"><span class="label">보유 수량</span><span class="value">' + fmtNum(t.shares) + '</span></div>' +
       '<div class="card"><span class="label">평균 매수단가</span><span class="value">' + (t.avgPrice ? fmtNum(t.avgPrice, 2) : '-') + '</span></div>' +
       '<div class="card highlight"><span class="label">현재 평가금액</span><span class="value">' + (t.currentValue !== null ? fmtWon(t.currentValue) : '현재가 입력 필요') + '</span></div>' +
-      '<div class="card' + profitClass + '"><span class="label">손익</span><span class="value">' + (t.profit !== null ? fmtWon(t.profit) : '-') + '</span></div>' +
-      '<div class="card' + retClass + '" style="grid-column: span 2;"><span class="label">수익률(수수료 반영)</span><span class="value">' + fmtPct(t.returnPct) + '</span></div>' +
+      '<div class="card' + profitClass + '"><span class="label">손익(분배금 포함)</span><span class="value">' + (t.profit !== null ? fmtWon(t.profit) : '-') + '</span></div>' +
+      '<div class="card' + retClass + '" style="grid-column: span 2;"><span class="label">수익률(수수료·분배금 반영)</span><span class="value">' + fmtPct(t.returnPct) + '</span></div>' +
       '</section>';
 
     html += '<section class="panel">' +
@@ -294,8 +305,24 @@
       '</section>';
 
     html += '<section class="panel">' +
+      '<h2>수익분배금 기록 추가</h2>' +
+      '<div class="form-row">' +
+      '<div class="field"><label>지급일</label><input id="d-date-' + accId + '" type="date" /></div>' +
+      '<div class="field"><label>분배금액(원)</label><input id="d-amount-' + accId + '" type="number" placeholder="15000" /></div>' +
+      '<button class="btn-add" id="btn-add-dist-' + accId + '">추가</button>' +
+      '</div>' +
+      '<p class="fee-note">받은 분배금을 재투자하셨다면, 위 "납입 기록 추가"에 그 매수 내역도 별도로 남겨주세요.</p>' +
+      '<p class="error" id="dist-error-' + accId + '" style="display:none;"></p>' +
+      '</section>';
+
+    html += '<section class="panel">' +
       '<h2>기록 목록 (' + t.sorted.length + '건)</h2>' +
       '<div id="record-area-' + accId + '"></div>' +
+      '</section>';
+
+    html += '<section class="panel">' +
+      '<h2>수익분배금 목록 (' + t.distributions.length + '건)</h2>' +
+      '<div id="dist-area-' + accId + '"></div>' +
       '</section>';
 
     document.getElementById('account-view').innerHTML = html;
@@ -320,6 +347,28 @@
         btn.addEventListener('click', function () {
           var id = btn.getAttribute('data-id');
           state.accounts[accId].entries = state.accounts[accId].entries.filter(function (e) { return e.id !== id; });
+          saveToCloud();
+          renderSimpleAccountView(accId);
+        });
+      });
+    }
+
+    var distArea = document.getElementById('dist-area-' + accId);
+    if (t.distributions.length === 0) {
+      distArea.innerHTML = '<p class="empty">아직 수익분배금 기록이 없어요.</p>';
+    } else {
+      var distRows = t.distributions.map(function (d) {
+        return '<tr>' +
+          '<td>' + d.date + '</td>' +
+          '<td>' + fmtWon(d.amount) + '</td>' +
+          '<td><button class="btn-del" data-dist-id="' + d.id + '">삭제</button></td>' +
+          '</tr>';
+      }).join('');
+      distArea.innerHTML = '<table><thead><tr><th>지급일</th><th>분배금액</th><th></th></tr></thead><tbody>' + distRows + '</tbody></table>';
+      Array.prototype.forEach.call(distArea.querySelectorAll('.btn-del'), function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-dist-id');
+          state.accounts[accId].distributions = (state.accounts[accId].distributions || []).filter(function (d) { return d.id !== id; });
           saveToCloud();
           renderSimpleAccountView(accId);
         });
@@ -356,6 +405,24 @@
       var feeRate = state.accounts[accId].feeRate || 0;
       var fee = Math.round(amount * feeRate / 100);
       state.accounts[accId].entries.push({ id: Date.now().toString(), date: date, amount: amount, price: price, fee: fee });
+      saveToCloud();
+      renderSimpleAccountView(accId);
+    });
+
+    document.getElementById('btn-add-dist-' + accId).addEventListener('click', function () {
+      var date = document.getElementById('d-date-' + accId).value;
+      var amount = parseFloat(document.getElementById('d-amount-' + accId).value);
+      var errEl = document.getElementById('dist-error-' + accId);
+      function showErr(msg) {
+        if (!msg) { errEl.style.display = 'none'; errEl.textContent = ''; return; }
+        errEl.style.display = 'block';
+        errEl.textContent = msg;
+      }
+      if (!date) { showErr('지급일을 입력해주세요.'); return; }
+      if (isNaN(amount) || amount <= 0) { showErr('분배금액을 정확히 입력해주세요.'); return; }
+      showErr(null);
+      if (!state.accounts[accId].distributions) state.accounts[accId].distributions = [];
+      state.accounts[accId].distributions.push({ id: Date.now().toString(), date: date, amount: amount });
       saveToCloud();
       renderSimpleAccountView(accId);
     });
