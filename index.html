@@ -35,6 +35,10 @@
   .stock-chip.active { background: #1c2230; color: #fff; border-color: #1c2230; }
   .stock-chip-del { margin-left: 6px; color: #b0b5bd; }
   .stock-chip.active .stock-chip-del { color: #c9ccd2; }
+  .stock-chip-wrap { display: inline-flex; align-items: center; gap: 2px; }
+  .stock-chip-move { color: #b0b5bd; font-size: 16px; font-weight: 700; cursor: pointer; padding: 0 3px; user-select: none; }
+  .stock-chip-move:hover { color: #4b5563; }
+  .stock-chip-move.disabled { color: #e2e4e8; cursor: default; }
   .add-stock-row { display: flex; gap: 6px; margin-bottom: 14px; }
   .add-stock-row input { flex: 1; }
   .add-stock-row button { background: #fff; border: 1px dashed #b7bcc4; color: #4b5563; border-radius: 999px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
@@ -155,6 +159,7 @@
     },
     usstock: {
       stocks: {}, // { id: { name, currentPrice, feeRate, transactions: [{id,date,type,price,qty,fee}] } }
+      stockOrder: [], // 종목 표시 순서
       exchangeRate: 1400
     }
   };
@@ -195,6 +200,9 @@
       }
       if (data && data.usstock && data.usstock.stocks) {
         state.usstock.stocks = data.usstock.stocks;
+      }
+      if (data && data.usstock && data.usstock.stockOrder) {
+        state.usstock.stockOrder = data.usstock.stockOrder;
       }
       if (data && data.usstock && data.usstock.exchangeRate) {
         state.usstock.exchangeRate = data.usstock.exchangeRate;
@@ -436,58 +444,88 @@
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return (a.id || '').localeCompare(b.id || '');
     });
-    var qty = 0, avgCost = 0, realizedPnl = 0, realizedCostBasis = 0, feeTotal = 0, boughtTotal = 0;
+    var qty = 0, avgPricePure = 0, avgCostFull = 0, realizedPnl = 0, realizedCostBasis = 0, feeTotal = 0, boughtTotal = 0;
     txs.forEach(function (tx) {
       var fee = tx.fee || 0;
       feeTotal += fee;
       if (tx.type === 'buy') {
-        var cost = tx.price * tx.qty + fee;
+        var costFull = tx.price * tx.qty + fee;
         boughtTotal += tx.price * tx.qty;
-        avgCost = (qty + tx.qty) > 0 ? (avgCost * qty + cost) / (qty + tx.qty) : 0;
+        avgPricePure = (qty + tx.qty) > 0 ? (avgPricePure * qty + tx.price * tx.qty) / (qty + tx.qty) : 0;
+        avgCostFull = (qty + tx.qty) > 0 ? (avgCostFull * qty + costFull) / (qty + tx.qty) : 0;
         qty += tx.qty;
       } else {
         var proceeds = tx.price * tx.qty - fee;
-        realizedPnl += proceeds - avgCost * tx.qty;
-        realizedCostBasis += avgCost * tx.qty;
+        realizedPnl += proceeds - avgCostFull * tx.qty;
+        realizedCostBasis += avgCostFull * tx.qty;
         qty -= tx.qty;
       }
     });
     var cp = parseFloat(stock.currentPrice);
     var currentValue = !isNaN(cp) ? qty * cp : null;
-    var costBasis = avgCost * qty; // 현재 보유분의 투자금
+    var costBasis = avgCostFull * qty; // 현재 보유분의 실투자원가(수수료 포함)
     var unrealizedPnl = currentValue !== null ? currentValue - costBasis : null;
     var unrealizedPct = currentValue !== null && costBasis > 0 ? (unrealizedPnl / costBasis) * 100 : null;
     var realizedPct = realizedCostBasis > 0 ? (realizedPnl / realizedCostBasis) * 100 : null;
     var totalPnl = (currentValue !== null ? unrealizedPnl : 0) + realizedPnl;
     return {
-      qty: qty, avgCost: avgCost, costBasis: costBasis, currentValue: currentValue,
+      qty: qty, avgCost: avgPricePure, avgCostFull: avgCostFull, costBasis: costBasis, currentValue: currentValue,
       unrealizedPnl: unrealizedPnl, unrealizedPct: unrealizedPct,
       realizedPnl: realizedPnl, realizedCostBasis: realizedCostBasis, realizedPct: realizedPct,
       feeTotal: feeTotal, totalPnl: totalPnl, sorted: txs
     };
   }
 
-  function ensureActiveStock() {
+  function ensureStockOrder() {
     var ids = Object.keys(state.usstock.stocks);
+    if (!state.usstock.stockOrder) state.usstock.stockOrder = [];
+    // 존재하지 않는 종목 id는 순서에서 제거
+    state.usstock.stockOrder = state.usstock.stockOrder.filter(function (id) { return state.usstock.stocks[id]; });
+    // 순서 목록에 없는 종목은 뒤에 추가
+    ids.forEach(function (id) {
+      if (state.usstock.stockOrder.indexOf(id) === -1) state.usstock.stockOrder.push(id);
+    });
+  }
+
+  function ensureActiveStock() {
+    ensureStockOrder();
+    var ids = state.usstock.stockOrder;
     if (ids.length === 0) { state.activeStockId = null; return; }
     if (!state.activeStockId || !state.usstock.stocks[state.activeStockId]) {
       state.activeStockId = ids[0];
     }
   }
 
+  function moveStock(id, direction) {
+    var order = state.usstock.stockOrder;
+    var idx = order.indexOf(id);
+    if (idx === -1) return;
+    var newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= order.length) return;
+    var tmp = order[newIdx];
+    order[newIdx] = order[idx];
+    order[idx] = tmp;
+    saveToCloud();
+    renderUsStockView();
+  }
+
   function renderUsStockView() {
     ensureActiveStock();
-    var ids = Object.keys(state.usstock.stocks);
+    var ids = state.usstock.stockOrder;
 
     var html = '';
     if (ids.length === 0) {
       html += '<div class="stock-tabs"></div>';
     } else {
-      html += '<div class="stock-tabs">' + ids.map(function (id) {
+      html += '<div class="stock-tabs">' + ids.map(function (id, idx) {
         var s = state.usstock.stocks[id];
         var active = id === state.activeStockId ? ' active' : '';
-        return '<button class="stock-chip' + active + '" data-stock="' + id + '">' + s.name +
-          '<span class="stock-chip-del" data-stock-del="' + id + '">✕</span></button>';
+        var leftBtn = idx > 0 ? '<span class="stock-chip-move" data-move-left="' + id + '">‹</span>' : '<span class="stock-chip-move disabled">‹</span>';
+        var rightBtn = idx < ids.length - 1 ? '<span class="stock-chip-move" data-move-right="' + id + '">›</span>' : '<span class="stock-chip-move disabled">›</span>';
+        return '<span class="stock-chip-wrap">' + leftBtn +
+          '<button class="stock-chip' + active + '" data-stock="' + id + '">' + s.name +
+          '<span class="stock-chip-del" data-stock-del="' + id + '">✕</span></button>' +
+          rightBtn + '</span>';
       }).join('') + '</div>';
     }
 
@@ -522,7 +560,7 @@
 
     html += '<section class="summary-grid">' +
       '<div class="card"><span class="label">보유 수량</span><span class="value">' + fmtNum(t.qty) + '</span></div>' +
-      '<div class="card"><span class="label">평균 매수단가</span><span class="value">' + (t.qty > 0 ? fmtUsd(t.avgCost) : '-') + '</span></div>' +
+      '<div class="card"><span class="label">평균 매수단가</span><span class="value">' + (t.qty > 0 ? fmtUsd(t.avgCost) : '-') + '</span>' + (t.qty > 0 ? '<span class="sub-value">수수료 포함 ' + fmtUsd(t.avgCostFull) + '</span>' : '') + '</div>' +
       '<div class="card"><span class="label">누적 수수료</span><span class="value">' + fmtUsd(t.feeTotal) + '</span><span class="sub-value">≈ ' + fmtWon(feeKrw) + '</span></div>' +
       '<div class="card highlight"><span class="label">현재 평가금액</span><span class="value">' + (t.currentValue !== null ? fmtUsd(t.currentValue) : '현재가 입력 필요') + '</span>' + (t.currentValue !== null ? '<span class="sub-value">≈ ' + fmtWon(currentValueKrw) + '</span>' : '') + '</div>' +
       '<div class="card' + unrClass + '"><span class="label">미실현 손익</span><span class="value">' + (t.unrealizedPnl !== null ? fmtUsd(t.unrealizedPnl) : '-') + '</span>' + (t.unrealizedPnl !== null ? '<span class="sub-value">≈ ' + fmtWon(unrealizedKrw) + '</span>' : '') + '</div>' +
@@ -672,9 +710,22 @@
         var name = state.usstock.stocks[id] ? state.usstock.stocks[id].name : '이 종목';
         if (!confirm(name + '의 모든 거래 기록을 삭제할까요?')) return;
         delete state.usstock.stocks[id];
+        state.usstock.stockOrder = (state.usstock.stockOrder || []).filter(function (sid) { return sid !== id; });
         if (state.activeStockId === id) state.activeStockId = null;
         saveToCloud();
         renderUsStockView();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-move-left]'), function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        moveStock(btn.getAttribute('data-move-left'), -1);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-move-right]'), function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        moveStock(btn.getAttribute('data-move-right'), 1);
       });
     });
     var addBtn = document.getElementById('btn-add-stock');
@@ -685,6 +736,8 @@
         if (!name) return;
         var id = 'stk_' + Date.now().toString();
         state.usstock.stocks[id] = { name: name, currentPrice: '', feeRate: 0.07, transactions: [] };
+        if (!state.usstock.stockOrder) state.usstock.stockOrder = [];
+        state.usstock.stockOrder.push(id);
         state.activeStockId = id;
         saveToCloud();
         renderUsStockView();
